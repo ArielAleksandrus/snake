@@ -1,5 +1,21 @@
 #include "utils.h"
 
+int canUpdateDirection(Snake* s){
+	Position* head = (Position*) lAt(s->bodyPositions, 0);
+	Position* neck = (Position*) lAt(s->bodyPositions, 1);
+	if(neck == NULL)
+		return 1;
+
+	int xDiff = head->x - neck->x;
+	int yDiff = head->y - neck->y;
+
+	if((xDiff == 1 || xDiff == -1) && s->newDirection != LEFT && s->newDirection != RIGHT)
+		return 1;
+	if((yDiff == 1 || yDiff == -1) && s->newDirection != UP && s->newDirection != DOWN)
+		return 1;
+	return 0;
+}
+
 void mapSnake(int** map, int height, int width, List* snakeBodyParts){
 	int i;
 
@@ -13,12 +29,12 @@ void mapSnake(int** map, int height, int width, List* snakeBodyParts){
 	}
 }
 
-void printHeader(Player* p){
-	printw("Lives: %d\tScore: %d\n", p->lives, p->score);
+void printHeader(Level* l, Player* p){
+	printw("Lives: %d\tScore: %d/%d\n", p->lives, p->score.total, l->targetScore);
 }
 void printFooter(Snake* s){
 	printw("Snake speed %d\n", s->speed);
-	printw("Snake size: %d ", s->bodyPositions->size);
+	printw("Snake size: %d", s->bodyPositions->size);
 	int i;
 	
 	Bonus* b;
@@ -112,7 +128,7 @@ void printMapThreadFunction(PrintMapData* pmd){
 	while(1){
   	clear();
   	move(0,0);
-  	printHeader(pmd->player);
+  	printHeader(pmd->level, pmd->player);
 		printMap(pmd->level->map, pmd->level->width, pmd->level->height);
 		printFooter(pmd->snake);
 		//INCOMPLETE! - printStats(pmd->level, pmd->player);
@@ -240,13 +256,14 @@ void handleSnake(Snake* s, Level* l, Player* p, GameControl* gc){
 	moveSnake(s, l, p, gc);
 }
 
-void directionInput(Snake* s){
+void directionInput(GameControl* gc, Snake* s){
 	//////// CAPTURING USER INPUT ////////
   while(1){
   	if(s == NULL){
   		return;
   	}
-    if (getch() == '\033') {    // if the first value is esc
+		char c = getch();
+    if (c == '\033') {    // if the first value is esc
       getch();                // skip the [
       switch(getch()) {       // the real value
         case 'A':
@@ -268,12 +285,14 @@ void directionInput(Snake* s){
       }
     } else {
       // INCOMPLETE!! - q for quit, p for pause, etc..
+			if(c == 'n' || c == 'N')
+				gc->advanceLevel = 1;
     }
   }
   ////////////////////////////////////////
 }
-void directionInputThreadFunction(Snake* s){
-	directionInput(s);
+void directionInputThreadFunction(DirectionInputData* did){
+	directionInput(did->gameControl, did->snake);
 }
 void handleSnakeThreadFunction(HandleSnakeData* msd){
 	struct timespec spec, spec2;
@@ -287,24 +306,43 @@ void gameControlThreadFunction(GameControlData* gcd){
 	struct timespec spec, spec2;
 	GameControl* gc = gcd->gameControl;
 	while(1){
+		// activated when player dies.
 		if(gc->restartLevel == 1){
 			if(gcd->player->lives <= 0){
 				// INCOMPLETE! - update stats.
 				endwin();
-				printf("\nVocê perdeu!\n");
+				system("clear");
+				printf("Você perdeu!\n\n");
 				exit(0);
 				// INCOMPLETE! - print score and stats.
 			}
+			int levelNumber = gcd->level->levelNumber;
 			unloadLevel(gcd->level, gcd->snake, gcd->threads);
 
 			gcd->snake = malloc(sizeof(Snake));
-			gcd->level = loadLevel1(gcd->snake);
+			gcd->level = loadLevel(gcd->snake, levelNumber);
 			
 			startLevel(gcd->level, gcd->snake, gcd->player, gcd->gameControl, gcd->threads);
 			
 			gc->restartLevel = 0;
 		}
 
+		// player wants to advance to the next level.
+		if(gcd->gameControl->advanceLevel == 1){
+			// does he/she have enough points?
+			if(gcd->player->score.total >= gcd->level->targetScore){
+				gcd->gameControl->advanceLevel = 0;
+				int levelNumber = gcd->level->levelNumber;
+				unloadLevel(gcd->level, gcd->snake, gcd->threads);
+				
+				gcd->snake = malloc(sizeof(Snake));
+				gcd->level = loadLevel(gcd->snake, levelNumber + 1);
+
+				startLevel(gcd->level, gcd->snake, gcd->player, gcd->gameControl, gcd->threads);
+			} else {
+				gcd->gameControl->advanceLevel = 0;
+			}
+		}
 		spec.tv_sec = 0;
 		spec.tv_nsec = 200 * 1.0e6;
 		nanosleep(&spec, &spec2);

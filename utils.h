@@ -9,7 +9,7 @@
 #include "level.h"
 
 void mapSnake(int** map, int height, int width, List* snakeBodyParts);
-void printHeader(Player* p);
+void printHeader(Level* l, Player* p);
 void printMap(int** map, int height, int width);
 void printMapThreadFunction(PrintMapData* pmd);
 
@@ -18,8 +18,9 @@ Stats 	newStats();
 GameControl* newGameControl();
 Stats 	loadLifetimeStats();
 
-void 		directionInput(Snake* s);
-void 		directionInputThreadFunction(Snake* s);
+int 		canUpdateDirection(Snake* s);
+void 		directionInput(GameControl* gc, Snake* s);
+void 		directionInputThreadFunction(DirectionInputData* did);
 void		moveSnake(Snake* s, Level* l, Player* p, GameControl* gc);
 void		handleBonus(Snake* s, Player* p);
 void		handleSnake(Snake* s, Level* l, Player* p, GameControl* gc);

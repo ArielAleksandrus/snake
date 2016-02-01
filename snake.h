@@ -13,9 +13,5 @@
 #include "utils.h"
 #include "spawner.h"
 
-
-void		buildBox(int** map, int height, int width);
-
-int 		canUpdateDirection(Snake* s);
 int 		collide(Level* l, Snake* s, Player* p, GameControl* gc, Position prevHead);
 #endif

@@ -34,6 +34,8 @@
 #define RED		3
 #define GREEN	4
 
+#define LEVEL1_TARGET_SCORE 10
+#define LEVEL2_TARGET_SCORE 2500
 
 #define REFRESH_RATE 100
 #define FOOD_THREAD_RATE 500
@@ -105,6 +107,8 @@ typedef struct Level{
 	int** map;
 	int width;
 	int height;
+	
+	int targetScore;
 
 	int curFoodQty;
 	List* bonuses;
@@ -135,6 +139,11 @@ typedef struct HandleSnakeData{
 	Player* player;
 	GameControl* gameControl;
 }HandleSnakeData;
+typedef struct DirectionInputData{
+	GameControl* gameControl;
+	Snake* snake;
+}DirectionInputData;
+
 typedef struct Threads{
 	pthread_t gameControlThread;
 	pthread_t directionInputThread;
