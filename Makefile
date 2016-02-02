@@ -1,14 +1,22 @@
 CC=gcc
 CFLAGS=-I. -lpthread -lncurses -lm
 DEBUGFLAGS=$(CFLAGS) -g
-SOURCE=snake.c spawner.c level.c utils.c list.c
+SOURCE=spawner.c level.c utils.c list.c filereader.c
+MAIN=snake.c $(SOURCE)
+TEST=test/$(FILE) $(SOURCE)
 BIN=a.out
 
-all: clean $(SOURCE)
-	$(CC) $(SOURCE) $(CFLAGS) -o $(BIN)
+all: clean $(MAIN)
+	$(CC) $(MAIN) $(CFLAGS) -o $(BIN)
 
-debug: clean $(SOURCE)
-	$(CC) $(SOURCE) $(DEBUGFLAGS) -o $(BIN)
+debug: clean $(MAIN)
+	$(CC) $(MAIN) $(DEBUGFLAGS) -o $(BIN)
+	
+test: clean $(TEST)
+	$(CC) $(TEST) $(CFLAGS) -o $(BIN)
+
+test_debug: clean $(TEST)
+	$(CC) $(TEST) $(DEBUGFLAGS) -o $(BIN)
 
 clean:
 	rm -f *.o

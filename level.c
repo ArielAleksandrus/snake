@@ -116,7 +116,7 @@ Level* loadLevel2(Snake* s){
 
 	///////////////// SET MAP PROPS ////////////////////
 	l->levelNumber = 2;
-	l->targetScore = LEVEL1_TARGET_SCORE;
+	l->targetScore = LEVEL2_TARGET_SCORE;
 	l->spawnPoint.x = l->width / 2;
 	l->spawnPoint.y = l->height / 2;
 
