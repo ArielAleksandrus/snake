@@ -3,7 +3,7 @@ CFLAGS=-I. -lpthread -lncurses -lm
 DEBUGFLAGS=$(CFLAGS) -g
 SOURCE=spawner.c level.c utils.c list.c filereader.c
 MAIN=snake.c $(SOURCE)
-TEST=test/$(FILE) $(SOURCE)
+TEST=test/test_$(FILE) $(SOURCE)
 BIN=a.out
 
 all: clean $(MAIN)

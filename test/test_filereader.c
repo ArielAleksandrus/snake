@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "../list.h"
+#include "../types.h"
 #include "../level.h"
 #include "../filereader.h"
 
@@ -21,6 +23,7 @@ void printFile(FILE* f){
 	printf("\n\n");
 }
 void printLevelMap(Level* l){
+	int i, j;
 	printf("MAP:\n\t");
 	printf("Size: \n\t\t%d width\n\t\t%d height\n\n\t", l->width, l->height);
 	printf("Spawn point: (%d, %d)\n\n\t", l->spawnPoint.x, l->spawnPoint.y);
@@ -28,16 +31,27 @@ void printLevelMap(Level* l){
 	printf("Initial speed: %f\n\n\t", l->initialSpeed);
 	printf("Initial direction: %d\n\n\t", l->initialDirection);
 	printf("Structure:\n\t\t");
-	int i, j;
 	for(j = 0; j < l->height; j++){
 		for(i = 0; i < l->width; i++){
 			printf("%d\t", l->map[i][j]);
 		}
 		printf("\n\t\t");
 	}
+	printf("\n\t");
+	List* wcbs = l->bonusSpawnRules.whatCanBeSpawned;
+	printf("What can be spawned: %d bonuses\n\t\t", wcbs->size);
+	Bonus* b;
+	for(i = 0; i < wcbs->size; i++){
+		b = lAt(wcbs, i);
+		printf("Bonus %d:\n\t\t", i+1);
+		printf("\tType: %d\n\t\t", b->type);
+		printf("\tDuration: %d\n\t\t", b->duration);
+		printf("\tRarity: %d\n\t\t", b->rarity);
+	}
 }
 void testLoadLevelFromFile(){
-	Level* l = loadLevelFromFile("maps3.txt");
+	Snake* s = malloc(sizeof(Snake));
+	Level* l = loadLevelFromFile(s, "maps3.txt");
 	printLevelMap(l);
 }
 int main(){

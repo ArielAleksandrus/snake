@@ -34,3 +34,28 @@
 	3.1
 :initialDirection:
 	LEFT
+:spawnData:
+	:frequency:
+		1
+	:generosity:
+		1
+	:itemsAtOnce:
+		1
+	:maxItemsAtOnce:
+		1
+	:whatCanBeSpawned:
+		:bonus:
+			:type:
+				EXTRA_POINTS
+			:duration:
+				14000
+			:rarity:
+				0
+		:bonus:
+			:type:
+				DOUBLE_POINTS
+			:duration:
+				14000
+			:rarity:
+				2
+		

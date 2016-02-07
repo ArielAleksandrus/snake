@@ -23,7 +23,7 @@ int readLine(FILE* in, char* buffer, size_t max){
 }
 
 int getTag(char* tag){
-	int i, total = 5;
+	int i, total = 6;
 	
 	char* tags[total];
 	tags[MAP] = ":map:\n";
@@ -31,12 +31,32 @@ int getTag(char* tag){
 	tags[INITIAL_SPEED] = ":initialSpeed:\n";
 	tags[INITIAL_DIRECTION] = ":initialDirection:\n";
 	tags[SPAWN_POINT] = ":spawnPoint:\n";
+	tags[SPAWN_DATA] = ":spawnData:\n";
+	
+	for(i = 0; i < total; i++)
+		if(strcmp(tag, tags[i]) == 0)
+			return i;
+	
+	return NOT_LEVEL_TAG;
+}
+int getBonusRelatedTag(char* tag){
+	int i, total = 9;
+	char* tags[total];
+	tags[BFREQUENCY] = "\t:frequency:\n";
+	tags[BGENEROSITY] = "\t:generosity:\n";
+	tags[BITEMS_AT_ONCE] = "\t:itemsAtOnce:\n";
+	tags[BMAX_ITEMS_AT_ONCE] = "\t:maxItemsAtOnce:\n";
+	tags[BWHAT_CAN_BE_SPAWNED] = "\t:whatCanBeSpawned:\n";
+	tags[BBONUS] = "\t\t:bonus:\n";
+	tags[BTYPE] = "\t\t\t:type:\n";
+	tags[BDURATION] = "\t\t\t:duration:\n";
+	tags[BRARITY] = "\t\t\t:rarity:\n";
 	
 	for(i = 0; i < total; i++){
 		if(strcmp(tag, tags[i]) == 0)
 			return i;
 	}
-	return NOT_LEVEL_TAG;
+	return NOT_BONUS_TAG;
 }
 int toConstant(char* constString){
 	if(strcmp(constString, "BLANK") == 0)
@@ -51,6 +71,16 @@ int toConstant(char* constString){
 		return LEFT;
 	else if(strcmp(constString, "UP") == 0)
 		return UP;
+	else if(strcmp(constString, "EXTRA_POINTS") == 0)
+		return EXTRA_POINTS;
+	else if(strcmp(constString, "DOUBLE_POINTS") == 0)
+		return DOUBLE_POINTS;
+	else if(strcmp(constString, "REDUCED_SPEED") == 0)
+		return REDUCED_SPEED;
+	else if(strcmp(constString, "INVINCIBLE") == 0)
+		return INVINCIBLE;
+	else if(strcmp(constString, "EXTRA_LIFE") == 0)
+		return EXTRA_LIFE;
 	else
 		return -1;
 }
@@ -113,8 +143,104 @@ void getMap(FILE* in, Level* l){
 	}
 	lclear(rows);
 }
-Level* loadLevelFromFile(const char* fileName){
+void getWhatCanBeSpawned(FILE* in, SpawnData* sd){
+	int lbs = 64, wbs = 32;
+	char lineBuffer[lbs], wordBuffer[wbs];
+	int tag;
+	clearBuffer(lineBuffer, lbs);
+	clearBuffer(wordBuffer, wbs);
+	
+	Bonus* b = NULL;
+	while(readLine(in, lineBuffer, lbs)){
+		tag = getBonusRelatedTag(lineBuffer);
+		clearBuffer(lineBuffer, lbs);
+		switch(tag){
+			case BBONUS:{
+				if(b != NULL)
+					lappend(sd->whatCanBeSpawned, b);
+				b = malloc(sizeof(Bonus));
+				break;
+			}
+			case BDURATION:{
+				clearBuffer(lineBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d", &b->duration);
+				break;
+			}
+			case BTYPE:{
+				clearBuffer(lineBuffer, lbs);
+				clearBuffer(wordBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				readWord(lineBuffer, wordBuffer, 0);
+				sscanf(lineBuffer, "%s", wordBuffer);
+				b->type = toConstant(wordBuffer);
+				break;
+			}
+			case BRARITY:{
+				clearBuffer(lineBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d", &b->rarity);
+				break;
+			}
+			case NOT_BONUS_TAG:{
+				lappend(sd->whatCanBeSpawned, b);
+				fseek(in, strlen(lineBuffer) * -1, SEEK_CUR);
+				return;
+			}
+		}
+	}
+	
+}
+void getSpawnData(FILE* in, Level* l){
+	int lbs = 64;
+	char lineBuffer[lbs];
+	int tag;
+	clearBuffer(lineBuffer, lbs);
+	static int i = 0;
+	while(readLine(in, lineBuffer, lbs)){
+		tag = getBonusRelatedTag(lineBuffer);
+		switch(tag){
+			case BFREQUENCY:{
+				clearBuffer(lineBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d", &l->bonusSpawnRules.frequency);
+				break;
+			}
+			case BGENEROSITY:{
+				clearBuffer(lineBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d", &l->bonusSpawnRules.generosity);
+				break;
+			}
+			case BITEMS_AT_ONCE:{
+				clearBuffer(lineBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d", &l->bonusSpawnRules.itemsAtOnce);
+				break;
+			}
+			case BMAX_ITEMS_AT_ONCE:{
+				clearBuffer(lineBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d", &l->bonusSpawnRules.maxItemsAtOnce);
+				break;
+			}
+			case BWHAT_CAN_BE_SPAWNED:{
+				l->bonusSpawnRules.whatCanBeSpawned = newList();
+				getWhatCanBeSpawned(in, &l->bonusSpawnRules);
+				break;
+			}
+			case NOT_BONUS_TAG:{
+				fseek(in, strlen(lineBuffer) * -1, SEEK_CUR);
+				return;
+			}
+			clearBuffer(lineBuffer, lbs);
+		}
+	}
+}
+Level* loadLevelFromFile(Snake* s, const char* fileName){
 	Level* l = malloc(sizeof(Level));
+	l->initialDirection = -1;
+	
 	char path[32];
 	strcpy(path, "maps/");
 	strcat(path, fileName);
@@ -159,9 +285,29 @@ Level* loadLevelFromFile(const char* fileName){
 					sscanf(lineBuffer, "%d %d", &l->spawnPoint.x, &l->spawnPoint.y);
 					break;
 				}
+				case SPAWN_DATA:{
+					getSpawnData(pFile, l);
+					break;
+				}
 			}
 		}
-		clearBuffer(lineBuffer, buffsize);
+		if(s == NULL)
+			return;
+		
+		lappend(s->bodyPositions, &l->spawnPoint);
+		
+		Position tail = l->spawnPoint;
+		int d = l->initialDirection;
+		tail.x = l->spawnPoint.x + (d == RIGHT) - (d == LEFT);
+		tail.y = l->spawnPoint.y + (d == DOWN) - (d == UP);
+		if(l->map[tail.x][tail.y] == BLANK){
+			Position* auxTail = malloc(sizeof(Position));
+			*auxTail = tail;
+			lappend(s->bodyPositions, auxTail);
+			s->tail = *auxTail;
+		} else {
+			s->tail = l->spawnPoint;
+		}
 	}
 	
 	fclose(pFile);
