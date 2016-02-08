@@ -34,9 +34,6 @@
 #define RED		3
 #define GREEN	4
 
-#define LEVEL1_TARGET_SCORE 10
-#define LEVEL2_TARGET_SCORE 100
-
 #define REFRESH_RATE 100
 #define FOOD_THREAD_RATE 500
 #define BONUS_THREAD_RATE 1000
@@ -77,7 +74,7 @@ typedef struct Snake{
 
 	int direction;
 	int newDirection;
-	int speed;
+	float speed; // 0 for the slowest possible, 10 for the fastest possible.
 	
 	int invincible;
 }Snake;
@@ -101,7 +98,7 @@ typedef struct Level{
 	int levelNumber;
 
 	Position spawnPoint;
-	float initialSpeed;
+	float initialSpeed; // 0 for the slowest possible, 10 for the fastest possible.
 	int initialDirection;
 
 	int** map;

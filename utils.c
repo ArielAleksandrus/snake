@@ -33,7 +33,7 @@ void printHeader(Level* l, Player* p){
 	printw("Lives: %d\tScore: %d/%d\n", p->lives, p->score.total, l->targetScore);
 }
 void printFooter(Snake* s){
-	printw("Snake speed %d\n", s->speed);
+	printw("Snake speed %.2f\n", s->speed);
 	printw("Snake size: %d", s->bodyPositions->size);
 	int i;
 	
@@ -298,7 +298,7 @@ void handleSnakeThreadFunction(HandleSnakeData* msd){
 	struct timespec spec, spec2;
 	while(1){
 		handleSnake(msd->snake, msd->level, msd->player, msd->gameControl);
-		spec = toTimespec(BASE_SPEED * msd->snake->speed);
+		spec = toTimespec(BASE_SPEED * (5.5 - msd->snake->speed / 2));
 		nanosleep(&spec, &spec2);
 	}
 }

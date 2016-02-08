@@ -21,7 +21,7 @@ int main(){
 	threads.args = newList();
 	////////////////// LOAD LEVEL 1 /////////////////////
 	Snake* s = malloc(sizeof(Snake));
-  Level* l1 = loadLevel1(s);
+  Level* l1 = loadLevel(s, 1);
 
   GameControlData gcd;
   gcd.threads = &threads;

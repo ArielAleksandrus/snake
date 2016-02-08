@@ -33,7 +33,7 @@
 :initialSpeed:
 	3.1
 :initialDirection:
-	LEFT
+	DOWN
 :spawnData:
 	:frequency:
 		1

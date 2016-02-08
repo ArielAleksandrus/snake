@@ -196,7 +196,6 @@ void getSpawnData(FILE* in, Level* l){
 	char lineBuffer[lbs];
 	int tag;
 	clearBuffer(lineBuffer, lbs);
-	static int i = 0;
 	while(readLine(in, lineBuffer, lbs)){
 		tag = getBonusRelatedTag(lineBuffer);
 		switch(tag){
@@ -240,6 +239,9 @@ void getSpawnData(FILE* in, Level* l){
 Level* loadLevelFromFile(Snake* s, const char* fileName){
 	Level* l = malloc(sizeof(Level));
 	l->initialDirection = -1;
+	l->curFoodQty = 0;
+	l->bonuses = newList();
+	s->bodyPositions = newList();
 	
 	char path[32];
 	strcpy(path, "maps/");
@@ -267,7 +269,6 @@ Level* loadLevelFromFile(Snake* s, const char* fileName){
 				case INITIAL_SPEED:{
 					clearBuffer(lineBuffer, buffsize);
 					readLine(pFile, lineBuffer, buffsize);
-					int k = -1;
 					sscanf(lineBuffer, "%f", &l->initialSpeed);
 					break;
 				}
@@ -291,24 +292,31 @@ Level* loadLevelFromFile(Snake* s, const char* fileName){
 				}
 			}
 		}
-		if(s == NULL)
-			return;
-		
-		lappend(s->bodyPositions, &l->spawnPoint);
-		
-		Position tail = l->spawnPoint;
-		int d = l->initialDirection;
-		tail.x = l->spawnPoint.x + (d == RIGHT) - (d == LEFT);
-		tail.y = l->spawnPoint.y + (d == DOWN) - (d == UP);
-		if(l->map[tail.x][tail.y] == BLANK){
-			Position* auxTail = malloc(sizeof(Position));
-			*auxTail = tail;
-			lappend(s->bodyPositions, auxTail);
-			s->tail = *auxTail;
-		} else {
-			s->tail = l->spawnPoint;
-		}
 	}
+	
+	if(s == NULL)
+			return l;
+	
+	s->head = l->spawnPoint;
+	Position* headPos = malloc(sizeof(Position));
+	*headPos = s->head;
+	lappend(s->bodyPositions, headPos);
+	Position tail = l->spawnPoint;
+	int d = l->initialDirection;
+	tail.x = l->spawnPoint.x + (d == RIGHT) - (d == LEFT);
+	tail.y = l->spawnPoint.y + (d == DOWN) - (d == UP);
+	if(l->map[tail.x][tail.y] == BLANK){
+		Position* auxTail = malloc(sizeof(Position));
+		*auxTail = tail;
+		lappend(s->bodyPositions, auxTail);
+		s->tail = *auxTail;
+	} else {
+		s->tail = l->spawnPoint;
+	}
+	s->direction = l->initialDirection;
+	s->newDirection = l->initialDirection;
+	s->speed = l->initialSpeed;
+	s->invincible = 0;
 	
 	fclose(pFile);
 	return l;

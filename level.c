@@ -1,166 +1,22 @@
 #include "level.h"
-
-Level* loadCurrentLevel(Snake* s, int playerScore){
-	if(playerScore < LEVEL1_TARGET_SCORE)
-		return loadLevel(s, 1);
-	if(playerScore < LEVEL2_TARGET_SCORE)
-		return loadLevel(s, 2);
-	return NULL;
-}
 Level* loadLevel(Snake* s, int levelNumber){
-	switch(levelNumber){
-		case 1:
-			return loadLevel1(s);
-		case 2:
-			return loadLevel2(s);
-	}
-	return NULL;
-}
-void setSnakeProps(Level* l, Snake* s){
-	s->head = l->spawnPoint;
-	s->tail.x = l->spawnPoint.x - 1;
-	s->tail.y = l->spawnPoint.y;
-
-	s->bodyPositions = newList();
+	char filename[16] = "maps";
+	char buff[4];
+	sprintf(buff, "%d", levelNumber);
+	
+	strcat(filename, buff);
+	strcat(filename, ".txt");
+	
+	Level* l = loadLevelFromFile(s, filename);
+	if(l == NULL)
+		return NULL;
+	
+	l->levelNumber = levelNumber;
 	s->activeBonuses = newList();
-
-	Position* auxPos = malloc(sizeof(Position));
-	*auxPos = s->head;
-	lappend(s->bodyPositions, auxPos);
-	auxPos = malloc(sizeof(Position));
-	*auxPos = s->tail;
-	lappend(s->bodyPositions, auxPos);
-
-	s->direction = l->initialDirection;
-	s->newDirection = l->initialDirection;
-	s->speed = l->initialSpeed;
-
-	spawnSnake(l, s);
-}
-Level* loadLevel1(Snake* s){
-	int i; // iterator.
-	Level* l = malloc(sizeof(Level));
-
-	/////////////////// BUILD MAP //////////////////////
-	l->width = 40;
-	l->height = 40;
-	l->map = malloc(l->width * sizeof(int*));
-	for(i = 0; i < l->width; i++)
-		l->map[i] = malloc(l->height * sizeof(int));
-
-	buildBox(l->map, l->height, l->width);
-	////////////////////////////////////////////////////
-
-
-	///////////////// SET MAP PROPS ////////////////////
-	l->levelNumber = 1;
-	l->targetScore = LEVEL1_TARGET_SCORE;
-	l->spawnPoint.x = l->width / 2;
-	l->spawnPoint.y = l->height / 2;
-
-	l->initialDirection = RIGHT;
-	l->initialSpeed = 1;
-
-	l->curFoodQty = 0;
-	l->bonuses = newList();
 	
-	SpawnData bsr;
-	bsr.frequency = 1;
-	bsr.generosity = 1;
-	bsr.itemsAtOnce = 1;
-	bsr.maxItemsAtOnce = 1;
-	bsr.whatCanBeSpawned = newList();
-	Bonus* bonusesAvailable = malloc(4*sizeof(Bonus));
-	bonusesAvailable[0].type = EXTRA_POINTS;
-	bonusesAvailable[0].duration = 10000;
-	bonusesAvailable[0].rarity = 0;
-	bonusesAvailable[1].type = DOUBLE_POINTS;
-	bonusesAvailable[1].duration = 10000;
-	bonusesAvailable[1].rarity = 2;
-	bonusesAvailable[2].type = REDUCED_SPEED;
-	bonusesAvailable[2].duration = 12000;
-	bonusesAvailable[2].rarity = 4;
-	bonusesAvailable[3].type = INVINCIBLE;
-	bonusesAvailable[3].duration = 8000;
-	bonusesAvailable[3].rarity = 3;
-	
-	
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[0]);
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[1]);
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[2]);
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[3]);
-	
-	l->bonusSpawnRules = bsr;
-	////////////////////////////////////////////////////
-
-
-	//////////////// SET SNAKE PROPS ///////////////////
-	setSnakeProps(l, s);
-	////////////////////////////////////////////////////
 	return l;
 }
-Level* loadLevel2(Snake* s){
-	int i; // iterator.
-	Level* l = malloc(sizeof(Level));
 
-	/////////////////// BUILD MAP //////////////////////
-	l->width = 20;
-	l->height = 10;
-	l->map = malloc(l->width * sizeof(int*));
-	for(i = 0; i < l->width; i++)
-		l->map[i] = malloc(l->height * sizeof(int));
-
-	buildBox(l->map, l->height, l->width);
-	////////////////////////////////////////////////////
-
-
-	///////////////// SET MAP PROPS ////////////////////
-	l->levelNumber = 2;
-	l->targetScore = LEVEL2_TARGET_SCORE;
-	l->spawnPoint.x = l->width / 2;
-	l->spawnPoint.y = l->height / 2;
-
-	l->initialDirection = RIGHT;
-	l->initialSpeed = 1;
-
-	l->curFoodQty = 0;
-	l->bonuses = newList();
-	
-	SpawnData bsr;
-	bsr.frequency = 1;
-	bsr.generosity = 1;
-	bsr.itemsAtOnce = 1;
-	bsr.maxItemsAtOnce = 1;
-	bsr.whatCanBeSpawned = newList();
-	Bonus* bonusesAvailable = malloc(4*sizeof(Bonus));
-	bonusesAvailable[0].type = EXTRA_POINTS;
-	bonusesAvailable[0].duration = 10000;
-	bonusesAvailable[0].rarity = 0;
-	bonusesAvailable[1].type = DOUBLE_POINTS;
-	bonusesAvailable[1].duration = 10000;
-	bonusesAvailable[1].rarity = 2;
-	bonusesAvailable[2].type = REDUCED_SPEED;
-	bonusesAvailable[2].duration = 12000;
-	bonusesAvailable[2].rarity = 4;
-	bonusesAvailable[3].type = INVINCIBLE;
-	bonusesAvailable[3].duration = 8000;
-	bonusesAvailable[3].rarity = 3;
-	
-	
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[0]);
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[1]);
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[2]);
-	lappend(bsr.whatCanBeSpawned, &bonusesAvailable[3]);
-	
-	l->bonusSpawnRules = bsr;
-	////////////////////////////////////////////////////
-
-
-	//////////////// SET SNAKE PROPS ///////////////////
-	setSnakeProps(l, s);
-	////////////////////////////////////////////////////
-	return l;
-}
 void startLevel(Level* l, Snake* s, Player* p, GameControl* gc, Threads* threads){
 	////////////////////////// PREPARE SNAKE DATA ////////////////////////////////////
 	s->invincible = 0;
@@ -245,14 +101,14 @@ void unloadLevel(Level* l, Snake* s, Threads* threads){
 	for(i = 0; i < l->width; i++)
 		free(l->map[i]);
 
-	Bonus* bonusArray = lAt(l->bonusSpawnRules.whatCanBeSpawned, 0);
-	free(bonusArray);
+	lclear(l->bonusSpawnRules.whatCanBeSpawned);
 	lfree(l->bonusSpawnRules.whatCanBeSpawned);
 	lclear(l->bonuses);
 	free(l);
 	lclear(s->bodyPositions);
 	lclear(s->activeBonuses);
 	free(s);
+	
 	lclear(threads->args);
 	threads->args = newList();
 	///////////////////////////////////////////////////////
