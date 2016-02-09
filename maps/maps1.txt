@@ -33,14 +33,14 @@
 :targetScore:
 	10
 :initialSpeed:
-	7
+	9
 :initialDirection:
 	RIGHT
 :spawnData:
 	:frequency:
-		10
-	:generosity:
 		1
+	:generosity:
+		0
 	:itemsAtOnce:
 		1
 	:maxItemsAtOnce:
@@ -50,18 +50,18 @@
 	:whatCanBeSpawned:
 		:bonus:
 			:type:
-				EXTRA_SIZE
+				HALF_SIZE
 			:duration:
-				3000
+				1000
 			:rarity:
 				0
 		:bonus:
 			:type:
-				DOUBLE_POINTS
+				EXTRA_SIZE
 			:duration:
-				18000
+				2000
 			:rarity:
-				6
+				1
 		:bonus:
 			:type:
 				INVINCIBLE

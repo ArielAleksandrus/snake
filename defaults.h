@@ -17,6 +17,9 @@
 
 #include "types.h"
 
+#define BASE_SCORE 10
+#define DEATH_SCORE_LOSS 100
+
 #define SPAWN_DATA_DEFAULT_IAO					1
 #define SPAWN_DATA_DEFAULT_GENEROSITY		0
 #define SPAWN_DATA_DEFAULT_FREQUENCY		16

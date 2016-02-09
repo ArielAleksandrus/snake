@@ -55,11 +55,11 @@ void printLevelMap(Level* l){
 }
 void testLoadLevelFromFile(){
 	Snake* s = malloc(sizeof(Snake));
-	Level* l = loadLevelFromFile(s, "maps3.txt");
+	Level* l = loadLevelFromFile(s, "maps1.txt");
 	printLevelMap(l);
 }
 int main(){
-    char* filename = "maps/maps3.txt";
+    char* filename = "maps/maps1.txt";
     FILE* f = fopen(filename, "r");
     //printFile(f);
 		fclose(f);

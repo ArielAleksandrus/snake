@@ -12,6 +12,7 @@
 typedef struct ExtraSizeBonusData{
 	Bonus* bonus;
 	Snake* snake;
+	Player* player;
 }ExtraSizeBonusData;
 
 void spawnSnake(Level* l, Snake* s);
@@ -22,7 +23,7 @@ void spawnBonusThreadFunction(SpawnBonusData* sbd);
 void extraSizeBonusThreadFunction(ExtraSizeBonusData* esbd);
 
 // if apply is true, it activates the bonus effect. else, it deactivates.
-void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply, BonusThreads* bt);
+void setBonusEffect(Level* l, Snake* s, Player* p, Bonus* b, int apply, BonusThreads* bt);
 Bonus* getBonus(List* whatCanBeSpawned, int rarity);
 int hasBonus(List* bonuses, int type);
 #endif

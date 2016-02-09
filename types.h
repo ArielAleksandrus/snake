@@ -19,7 +19,7 @@
 #define REDUCED_SPEED	40
 #define INVINCIBLE 		50
 #define EXTRA_LIFE 		60
-#define RESET_SIZE		70
+#define HALF_SIZE		70
 /////////////////////////////////////////////
 
 #define LEFT 	1

@@ -93,6 +93,8 @@ int toConstant(char* constString){
 		return EXTRA_POINTS;
 	else if(strcmp(constString, "EXTRA_SIZE") == 0)
 		return EXTRA_SIZE;
+	else if(strcmp(constString, "HALF_SIZE") == 0)
+		return HALF_SIZE;
 	else if(strcmp(constString, "DOUBLE_POINTS") == 0)
 		return DOUBLE_POINTS;
 	else if(strcmp(constString, "REDUCED_SPEED") == 0)

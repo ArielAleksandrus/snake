@@ -23,7 +23,7 @@ int 		canUpdateDirection(Snake* s);
 void 		directionInput(GameControl* gc, Snake* s);
 void 		directionInputThreadFunction(DirectionInputData* did);
 void		moveSnake(Snake* s, Level* l, Player* p, GameControl* gc, BonusThreads* bt);
-void		handleBonus(Snake* s, Player* p, int sleepTime, BonusThreads* bt);
+void		handleBonus(Level* l, Snake* s, Player* p, int sleepTime, BonusThreads* bt);
 void		handleSnake(Snake* s, Level* l, Player* p, GameControl* gc, int sleepTime, BonusThreads* bt);
 void		handleSnakeThreadFunction(HandleSnakeData* msd);
 void		gameControlThreadFunction(GameControlData* gcd);

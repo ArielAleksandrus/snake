@@ -70,11 +70,11 @@ void printFooter(Snake* s){
 				str = "Extra life";
 				break;
 			}
-			case RESET_SIZE:{
-				str = "Reset size";
+			case HALF_SIZE:{
+				str = "Half size";
 			}
 		}
-		printw("%s (%d)", str, b->duration);
+		printw("%s (%.2fs)", str, (float)b->duration / 1000);
 		if(i != s->activeBonuses->size - 1)
 			printw(" | ");
 	}
@@ -236,7 +236,7 @@ void moveSnake(Snake* s, Level* l, Player* p, GameControl* gc, BonusThreads* bt)
 	if(s->bodyPositions->size > 1)
 		l->map[s->tail.x][s->tail.y] = SNAKE_TAIL;
 }
-void handleBonus(Snake* s, Player* p, int sleepTime, BonusThreads* bt){
+void handleBonus(Level* l, Snake* s, Player* p, int sleepTime, BonusThreads* bt){
 	if(s->activeBonuses->size == 0)
 		return;
 	
@@ -246,14 +246,14 @@ void handleBonus(Snake* s, Player* p, int sleepTime, BonusThreads* bt){
 		bonus = lAt(s->activeBonuses, i);
 		bonus->duration -= sleepTime;
 		if(bonus->duration <= 0){
-			setBonusEffect(s, p, bonus, 0, bt);
+			setBonusEffect(l, s, p, bonus, 0, bt);
 			lremoveAt(s->activeBonuses, i);
 			i--;
 		}
 	}
 }
 void handleSnake(Snake* s, Level* l, Player* p, GameControl* gc, int sleepTime, BonusThreads* bt){
-	handleBonus(s, p, sleepTime, bt);
+	handleBonus(l, s, p, sleepTime, bt);
 	moveSnake(s, l, p, gc, bt);
 }
 
@@ -368,7 +368,7 @@ int collide(Level* l, Snake* s, Player* p, GameControl* gc, BonusThreads* bt){
 	Position* head = (Position*) lAt(s->bodyPositions, 0);
 	switch(l->map[head->x][head->y]){
 		case FOOD:{
-			p->score.total += (10 + p->score.extraModifier) * p->score.multiplier;
+			p->score.total += (BASE_SCORE + p->score.extraModifier) * p->score.multiplier;
 			Position* newTail = malloc(sizeof(Position));
 			
 			*newTail = s->tail;
@@ -390,7 +390,7 @@ int collide(Level* l, Snake* s, Player* p, GameControl* gc, BonusThreads* bt){
 				printf("Error! Bonus could not be retrieved!\n");
 				exit(1);
 			}
-			setBonusEffect(s, p, b, 1, bt);
+			setBonusEffect(l, s, p, b, 1, bt);
 			lappend(s->activeBonuses, b);
 			free(aux);
 			break;
@@ -422,7 +422,7 @@ int collide(Level* l, Snake* s, Player* p, GameControl* gc, BonusThreads* bt){
 void playerDie(GameControl* gc, Player* p){
 	if(gc->restartLevel == 0){
 		p->lives--;
-		p->score.total -= 100;
+		p->score.total -= DEATH_SCORE_LOSS;
 		if(p->score.total < 0)
 			p->score.total = 0;
 		

@@ -28,7 +28,9 @@ void spawnBonus(Level* l, SpawnData sd){
 	if(randomRarity != 0)
 		randomRarity = rand() % randomRarity;
 	
-	int randomGenerosityFactor = rand() % sd.generosity;
+	int randomGenerosityFactor = 0;
+	if(sd.generosity > 0)
+		randomGenerosityFactor = rand() % sd.generosity;
 	
 	randomRarity += randomGenerosityFactor;
 	if(randomRarity > 6)
@@ -126,7 +128,7 @@ int hasBonus(List* bonuses, int type){
 	}
 	return 0;
 }
-void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply, BonusThreads* bt){
+void setBonusEffect(Level* l, Snake* s, Player* p, Bonus* b, int apply, BonusThreads* bt){
 	switch(b->type){
 		case EXTRA_POINTS:{
 			if(apply)
@@ -140,7 +142,9 @@ void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply, BonusThreads* bt){
 				ExtraSizeBonusData* esbd = malloc(sizeof(ExtraSizeBonusData));
 				esbd->bonus = b;
 				esbd->snake = s;
-				
+				esbd->player = p;
+				if(bt->extraSizeThread)
+					pthread_cancel(bt->extraSizeThread);
 				int rc = pthread_create(&bt->extraSizeThread, NULL, (void*) extraSizeBonusThreadFunction, esbd);
 				if(rc != 0){
 					endwin();
@@ -172,11 +176,30 @@ void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply, BonusThreads* bt){
 			break;
 		}
 		case EXTRA_LIFE:{
-			
+			if(apply)
+				p->lives++;
 			break;
 		}
-		case RESET_SIZE:{
-			
+		case HALF_SIZE:{
+			if(!apply)
+				break;
+
+			if(bt->extraSizeThread)
+				pthread_cancel(bt->extraSizeThread);
+			int size = s->bodyPositions->size;
+			int i;
+			Position* part;
+			for(i = 2; i < (size / 2) + 2; i++){
+				part = lAt(s->bodyPositions, (size/2));
+				l->map[part->x][part->y] = BLANK;
+				lremoveAt(s->bodyPositions, (size/2));
+			}
+			if(s->bodyPositions->size > 1){
+				part = lAt(s->bodyPositions, s->bodyPositions->size - 1);
+				s->tail = *part;
+			} else {
+				s->tail = s->head;
+			}
 			break;
 		}
 	}
@@ -195,7 +218,9 @@ void extraSizeBonusThreadFunction(ExtraSizeBonusData* esbd){
 		*newTail = snake->tail;
 		
 		lappend(snake->bodyPositions, newTail);
-		
+		int extra = esbd->player->score.extraModifier;
+		int multiplier = esbd->player->score.multiplier;
+		esbd->player->score.total += (BASE_SCORE + extra) * multiplier;
 		spec = toTimespec(SNAKE_MOVE_THREAD_RATE);
 		nanosleep(&spec, &spec2);
 	}
