@@ -13,5 +13,4 @@
 #include "utils.h"
 #include "spawner.h"
 
-int 		collide(Level* l, Snake* s, Player* p, GameControl* gc, Position prevHead);
 #endif

@@ -37,8 +37,12 @@ void printLevelMap(Level* l){
 		}
 		printf("\n\t\t");
 	}
-	printf("\n\t");
-	List* wcbs = l->bonusSpawnRules.whatCanBeSpawned;
+	printf("\n\nBonuses:\n\t");
+	SpawnData sd = l->bonusSpawnRules;
+	printf("Frequency: %d\n\t", sd.frequency);
+	printf("Generosity: %d\n\t", sd.generosity);
+	printf("Expiring in: %d\n\t", sd.expiring_in);
+	List* wcbs = sd.whatCanBeSpawned;
 	printf("What can be spawned: %d bonuses\n\t\t", wcbs->size);
 	Bonus* b;
 	for(i = 0; i < wcbs->size; i++){

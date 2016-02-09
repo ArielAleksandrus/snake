@@ -34,12 +34,12 @@ void lfree(List* l){
 	}
 	free(l);
 }
-int lsearchIndexByRef(List* l, void* ptrAddr){
+int lsearchIndexByRef(List* l, void** ptrAddr){
 	int i;
 	void* aux;
 	for(i = 0; i < l->size; i++){
 		aux = lAt(l, i);
-		if(aux == ptrAddr)
+		if(aux == *ptrAddr)
 			return i;
 	}
 	

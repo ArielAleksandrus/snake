@@ -40,21 +40,39 @@ int getTag(char* tag){
 	return NOT_LEVEL_TAG;
 }
 int getBonusRelatedTag(char* tag){
-	int i, total = 9;
-	char* tags[total];
-	tags[BFREQUENCY] = "\t:frequency:\n";
-	tags[BGENEROSITY] = "\t:generosity:\n";
-	tags[BITEMS_AT_ONCE] = "\t:itemsAtOnce:\n";
-	tags[BMAX_ITEMS_AT_ONCE] = "\t:maxItemsAtOnce:\n";
-	tags[BWHAT_CAN_BE_SPAWNED] = "\t:whatCanBeSpawned:\n";
-	tags[BBONUS] = "\t\t:bonus:\n";
-	tags[BTYPE] = "\t\t\t:type:\n";
-	tags[BDURATION] = "\t\t\t:duration:\n";
-	tags[BRARITY] = "\t\t\t:rarity:\n";
-	
-	for(i = 0; i < total; i++){
-		if(strcmp(tag, tags[i]) == 0)
-			return i;
+	char buff[32];
+	sscanf(tag, "%s", buff);
+	switch(buff[1]){
+		case 'b':{
+			return BBONUS;
+		}
+		case 'd':{
+			return BDURATION;
+		}
+		case 'e':{
+			return BEXPIRING_IN;
+		}
+		case 'f':{
+			return BFREQUENCY;
+		}
+		case 'g':{
+			return BGENEROSITY;
+		}
+		case 'i':{
+			return BITEMS_AT_ONCE;
+		}
+		case 'm':{
+			return BMAX_ITEMS_AT_ONCE;
+		}
+		case 'r':{
+			return BRARITY;
+		}
+		case 't':{
+			return BTYPE;
+		}
+		case 'w':{
+			return BWHAT_CAN_BE_SPAWNED;
+		}
 	}
 	return NOT_BONUS_TAG;
 }
@@ -73,6 +91,8 @@ int toConstant(char* constString){
 		return UP;
 	else if(strcmp(constString, "EXTRA_POINTS") == 0)
 		return EXTRA_POINTS;
+	else if(strcmp(constString, "EXTRA_SIZE") == 0)
+		return EXTRA_SIZE;
 	else if(strcmp(constString, "DOUBLE_POINTS") == 0)
 		return DOUBLE_POINTS;
 	else if(strcmp(constString, "REDUCED_SPEED") == 0)
@@ -158,7 +178,7 @@ void getWhatCanBeSpawned(FILE* in, SpawnData* sd){
 			case BBONUS:{
 				if(b != NULL)
 					lappend(sd->whatCanBeSpawned, b);
-				b = malloc(sizeof(Bonus));
+				b = newDefaultBonus();
 				break;
 			}
 			case BDURATION:{
@@ -196,9 +216,18 @@ void getSpawnData(FILE* in, Level* l){
 	char lineBuffer[lbs];
 	int tag;
 	clearBuffer(lineBuffer, lbs);
+	
+	l->bonusSpawnRules = newDefaultSpawnData();
+	
 	while(readLine(in, lineBuffer, lbs)){
 		tag = getBonusRelatedTag(lineBuffer);
 		switch(tag){
+			case BEXPIRING_IN:{
+				clearBuffer(lineBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d", &l->bonusSpawnRules.expiring_in);
+				break;
+			}
 			case BFREQUENCY:{
 				clearBuffer(lineBuffer, lbs);
 				readLine(in, lineBuffer, lbs);
@@ -224,7 +253,6 @@ void getSpawnData(FILE* in, Level* l){
 				break;
 			}
 			case BWHAT_CAN_BE_SPAWNED:{
-				l->bonusSpawnRules.whatCanBeSpawned = newList();
 				getWhatCanBeSpawned(in, &l->bonusSpawnRules);
 				break;
 			}
@@ -325,4 +353,22 @@ Level* loadLevelFromFile(Snake* s, const char* fileName){
 void clearBuffer(char* buff, int size){
 	while(size >= 0)
 		buff[--size] = 0;
+}
+
+Bonus* newDefaultBonus(){
+	Bonus* b = calloc(1, sizeof(Bonus));
+	b->duration = BONUS_DEFAULT_DURATION;
+	b->rarity = 0;
+	b->type = BONUS_DEFAULT_TYPE;
+	return b;
+}
+SpawnData newDefaultSpawnData(){
+	SpawnData sd;
+	sd.expiring_in = SPAWN_DATA_DEFAULT_EXPIRATION;
+	sd.frequency = SPAWN_DATA_DEFAULT_FREQUENCY;
+	sd.generosity = SPAWN_DATA_DEFAULT_GENEROSITY;
+	sd.itemsAtOnce = SPAWN_DATA_DEFAULT_IAO;
+	sd.maxItemsAtOnce = SPAWN_DATA_DEFAULT_MAX_IAO;
+	sd.whatCanBeSpawned = newList();
+	return sd;
 }

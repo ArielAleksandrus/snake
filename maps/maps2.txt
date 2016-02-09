@@ -19,13 +19,15 @@
 	DOWN
 :spawnData:
 	:frequency:
-		1
+		4
 	:generosity:
 		1
 	:itemsAtOnce:
 		1
 	:maxItemsAtOnce:
 		1
+	:expiring_in:
+		8000
 	:whatCanBeSpawned:
 		:bonus:
 			:type:

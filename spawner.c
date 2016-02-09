@@ -2,7 +2,7 @@
 #include <ncurses.h>
 #include <stdio.h>
 void spawnSnake(Level* l, Snake* s){
-	mapSnake(l->map, l->height, l->width, s->bodyPositions);
+	mapSnake(l->map, s->bodyPositions);
 }
 void spawnFood(Level* l){
 	if(l->curFoodQty > 0)
@@ -35,6 +35,7 @@ void spawnBonus(Level* l, SpawnData sd){
 		randomRarity = 6;
 	
 	*b = *(getBonus(sd.whatCanBeSpawned, randomRarity));
+	b->timeout = sd.expiring_in;
 	b->position.x = rand() % l->width;
 	b->position.y = rand() % l->height;
 	
@@ -66,7 +67,7 @@ void spawnBonusThreadFunction(SpawnBonusData* sbd){
 	while(1){
 		
 		spawnBonus(sbd->level, sbd->spawnData);
-				
+		
 		spec = toTimespec(BONUS_THREAD_RATE * sbd->spawnData.frequency);
 		nanosleep(&spec, &spec2);
 	}
@@ -125,7 +126,7 @@ int hasBonus(List* bonuses, int type){
 	}
 	return 0;
 }
-void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply){
+void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply, BonusThreads* bt){
 	switch(b->type){
 		case EXTRA_POINTS:{
 			if(apply)
@@ -135,7 +136,18 @@ void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply){
 			break;
 		}
 		case EXTRA_SIZE:{
-			
+			if(apply){
+				ExtraSizeBonusData* esbd = malloc(sizeof(ExtraSizeBonusData));
+				esbd->bonus = b;
+				esbd->snake = s;
+				
+				int rc = pthread_create(&bt->extraSizeThread, NULL, (void*) extraSizeBonusThreadFunction, esbd);
+				if(rc != 0){
+					endwin();
+					printf("\nError creating extraSizeBonusThread\n");
+					exit(1);
+				}
+			}
 			break;
 		}
 		case DOUBLE_POINTS:{
@@ -168,4 +180,24 @@ void setBonusEffect(Snake* s, Player* p, Bonus* b, int apply){
 			break;
 		}
 	}
+}
+
+void extraSizeBonusThreadFunction(ExtraSizeBonusData* esbd){
+	float i;
+	Snake* snake = esbd->snake;
+	float smtr = SNAKE_MOVE_THREAD_RATE;
+	struct timespec spec, spec2;
+	int dur = esbd->bonus->duration;
+	
+	for(i = 0; i < dur / smtr; i++){
+		Position* newTail = malloc(sizeof(Position));
+			
+		*newTail = snake->tail;
+		
+		lappend(snake->bodyPositions, newTail);
+		
+		spec = toTimespec(SNAKE_MOVE_THREAD_RATE);
+		nanosleep(&spec, &spec2);
+	}
+	free(esbd);
 }

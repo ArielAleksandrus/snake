@@ -16,7 +16,7 @@ int canUpdateDirection(Snake* s){
 	return 0;
 }
 
-void mapSnake(int** map, int height, int width, List* snakeBodyParts){
+void mapSnake(int** map, List* snakeBodyParts){
 	int i;
 
 	for(i = 0; i < snakeBodyParts->size; i++){
@@ -25,7 +25,9 @@ void mapSnake(int** map, int height, int width, List* snakeBodyParts){
 			part = SNAKE_TAIL;
 		if(i == 0)
 			part = SNAKE_HEAD;
-		map[((Position*) lAt(snakeBodyParts, i))->x][((Position*) lAt(snakeBodyParts, i))->y] = part;
+		
+		Position* pos = lAt(snakeBodyParts, i);
+		map[pos->x][pos->y] = part;
 	}
 }
 
@@ -72,7 +74,7 @@ void printFooter(Snake* s){
 				str = "Reset size";
 			}
 		}
-		printw("%s", str);
+		printw("%s (%d)", str, b->duration);
 		if(i != s->activeBonuses->size - 1)
 			printw(" | ");
 	}
@@ -105,8 +107,11 @@ void printMap(int** map, int width, int height){
 					c = "'";
 					break;
 				case SNAKE_BODY:
-				case SNAKE_TAIL:
 					color = GREEN;
+					c = " ";
+					break;
+				case SNAKE_TAIL:
+					color = YELLOW;
 					c = " ";
 					break;
 				default:
@@ -134,8 +139,7 @@ void printMapThreadFunction(PrintMapData* pmd){
 		//INCOMPLETE! - printStats(pmd->level, pmd->player);
   	refresh();
 
-		spec.tv_sec = 0;
-		spec.tv_nsec = REFRESH_RATE * 1.0e6;
+		spec = toTimespec(REFRESH_RATE);
 		nanosleep(&spec, &spec2);
 	}
 }
@@ -180,14 +184,16 @@ GameControl* newGameControl(){
 
 	return gc;
 }
-void moveSnake(Snake* s, Level* l, Player* p, GameControl* gc){
+void moveSnake(Snake* s, Level* l, Player* p, GameControl* gc, BonusThreads* bt){
 	int i;
 	Position* head = (Position*) lAt(s->bodyPositions, 0);
-	Position prevVal = *head;
 	int cud = canUpdateDirection(s);
 	if(cud){
 		s->direction = s->newDirection;
+		head->direction = s->direction;
 	}
+	
+	Position prevVal = *head;
 
 	switch(s->direction){
 		case UP:
@@ -207,7 +213,7 @@ void moveSnake(Snake* s, Level* l, Player* p, GameControl* gc){
 	// INCOMPLETE!! -- Detect collisions.
 	int collision = 0;
 	if(l->map[head->x][head->y] != BLANK)
-		collision = collide(l, s, p, gc, prevVal);
+		collision = collide(l, s, p, gc, bt);
 
 	if(collision == BLOCK){
 		*head = prevVal;
@@ -216,26 +222,21 @@ void moveSnake(Snake* s, Level* l, Player* p, GameControl* gc){
 
 	l->map[head->x][head->y] = SNAKE_HEAD;
 
-	if(collision != FOOD){
-		l->map[prevVal.x][prevVal.y] = BLANK;
-		for(i = 1; i < s->bodyPositions->size; i++){
-			Position* part = (Position*) lAt(s->bodyPositions, i);
-			l->map[part->x][part->y] = BLANK;
-			Position aux = *part;
+	l->map[prevVal.x][prevVal.y] = BLANK;
+	for(i = 1; i < s->bodyPositions->size; i++){
+		Position* part = (Position*) lAt(s->bodyPositions, i);
+		l->map[part->x][part->y] = BLANK;
+		Position aux = *part;
 
-			*part = prevVal;
-			l->map[prevVal.x][prevVal.y] = SNAKE_BODY;
-			prevVal = aux;
-		}
-		Position* tail = NULL;
-		if(s->bodyPositions->size > 1)
-			tail = (Position*) lAt(s->bodyPositions, s->bodyPositions->size - 1);
-
-		if(tail != NULL)
-			l->map[tail->x][tail->y] = SNAKE_TAIL;
+		*part = prevVal;
+		l->map[prevVal.x][prevVal.y] = SNAKE_BODY;
+		prevVal = aux;
 	}
+	s->tail = *((Position*) lAt(s->bodyPositions, s->bodyPositions->size - 1));
+	if(s->bodyPositions->size > 1)
+		l->map[s->tail.x][s->tail.y] = SNAKE_TAIL;
 }
-void handleBonus(Snake* s, Player* p){
+void handleBonus(Snake* s, Player* p, int sleepTime, BonusThreads* bt){
 	if(s->activeBonuses->size == 0)
 		return;
 	
@@ -243,17 +244,17 @@ void handleBonus(Snake* s, Player* p){
 	Bonus* bonus;
 	for(i = 0; i < s->activeBonuses->size; i++){
 		bonus = lAt(s->activeBonuses, i);
-		bonus->duration -= BASE_SPEED * s->speed;
+		bonus->duration -= sleepTime;
 		if(bonus->duration <= 0){
-			setBonusEffect(s, p, bonus, 0);
+			setBonusEffect(s, p, bonus, 0, bt);
 			lremoveAt(s->activeBonuses, i);
 			i--;
 		}
 	}
 }
-void handleSnake(Snake* s, Level* l, Player* p, GameControl* gc){
-	handleBonus(s, p);
-	moveSnake(s, l, p, gc);
+void handleSnake(Snake* s, Level* l, Player* p, GameControl* gc, int sleepTime, BonusThreads* bt){
+	handleBonus(s, p, sleepTime, bt);
+	moveSnake(s, l, p, gc, bt);
 }
 
 void directionInput(GameControl* gc, Snake* s){
@@ -294,11 +295,13 @@ void directionInput(GameControl* gc, Snake* s){
 void directionInputThreadFunction(DirectionInputData* did){
 	directionInput(did->gameControl, did->snake);
 }
-void handleSnakeThreadFunction(HandleSnakeData* msd){
+void handleSnakeThreadFunction(HandleSnakeData* hsd){
 	struct timespec spec, spec2;
 	while(1){
-		handleSnake(msd->snake, msd->level, msd->player, msd->gameControl);
-		spec = toTimespec(BASE_SPEED * (5.5 - msd->snake->speed / 2));
+		Snake* snake = hsd->snake; // used on SNAKE_MOVE_THREAD_RATE macro
+		int sleepTime = SNAKE_MOVE_THREAD_RATE;
+		handleSnake(hsd->snake, hsd->level, hsd->player, hsd->gameControl, sleepTime, hsd->bonusThreads);
+		spec = toTimespec(sleepTime);
 		nanosleep(&spec, &spec2);
 	}
 }
@@ -306,15 +309,27 @@ void gameControlThreadFunction(GameControlData* gcd){
 	struct timespec spec, spec2;
 	GameControl* gc = gcd->gameControl;
 	while(1){
+		// removes bonus that were not caught before timeout.
+		List* bonuses = gcd->level->bonuses;
+		Bonus* b;
+		int i;
+		for(i = 0; i < bonuses->size; i++){
+			b = lAt(bonuses, i);
+			b->timeout -= GAME_CONTROL_THREAD_RATE;
+			if(b->timeout <= 0){
+				gcd->level->map[b->position.x][b->position.y] = BLANK;
+				lremoveAt(bonuses, i);
+			}
+		}
 		// activated when player dies.
 		if(gc->restartLevel == 1){
 			if(gcd->player->lives <= 0){
 				// INCOMPLETE! - update stats.
+				// INCOMPLETE! - print score and stats.
 				endwin();
 				system("clear");
 				printf("Você perdeu!\n\n");
 				exit(0);
-				// INCOMPLETE! - print score and stats.
 			}
 			int levelNumber = gcd->level->levelNumber;
 			unloadLevel(gcd->level, gcd->snake, gcd->threads);
@@ -344,28 +359,28 @@ void gameControlThreadFunction(GameControlData* gcd){
 			}
 		}
 		spec.tv_sec = 0;
-		spec.tv_nsec = 200 * 1.0e6;
+		spec.tv_nsec = GAME_CONTROL_THREAD_RATE * 1.0e6;
 		nanosleep(&spec, &spec2);
 	}
 }
 
-int collide(Level* l, Snake* s, Player* p, GameControl* gc, Position prevHead){
+int collide(Level* l, Snake* s, Player* p, GameControl* gc, BonusThreads* bt){
 	Position* head = (Position*) lAt(s->bodyPositions, 0);
 	switch(l->map[head->x][head->y]){
 		case FOOD:{
 			p->score.total += (10 + p->score.extraModifier) * p->score.multiplier;
-			Position* neck = malloc(sizeof(Position));
-			*neck = prevHead;
-			linsertAt(s->bodyPositions, neck, 1);
-			l->map[neck->x][neck->y] = SNAKE_BODY;
+			Position* newTail = malloc(sizeof(Position));
+			
+			*newTail = s->tail;
+			
+			lappend(s->bodyPositions, newTail);
 			l->curFoodQty--;
 			return FOOD;
 		}
 		case BONUS:{
 			Bonus* b = findBonus(l, *head);
-			
-			void* aux;
-			aux = b;
+			void** aux = malloc(sizeof(void*));
+			*aux = b;
 			int i = lsearchIndexByRef(l->bonuses, aux);
 			
 			if(i >= 0)
@@ -375,8 +390,9 @@ int collide(Level* l, Snake* s, Player* p, GameControl* gc, Position prevHead){
 				printf("Error! Bonus could not be retrieved!\n");
 				exit(1);
 			}
-			setBonusEffect(s, p, b, 1);
+			setBonusEffect(s, p, b, 1, bt);
 			lappend(s->activeBonuses, b);
+			free(aux);
 			break;
 		}
 		case BLOCK:{

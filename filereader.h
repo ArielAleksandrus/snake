@@ -5,6 +5,7 @@
 #include <string.h>
 #include "list.h"
 #include "types.h"
+#include "defaults.h"
 
 #define MAP 0
 #define TARGET_SCORE 1
@@ -15,14 +16,15 @@
 #define NOT_LEVEL_TAG -1
 
 #define BRARITY 0
-#define BFREQUENCY 1
-#define BGENEROSITY 2
-#define BITEMS_AT_ONCE 3
-#define BMAX_ITEMS_AT_ONCE 4
-#define BWHAT_CAN_BE_SPAWNED 5
-#define BBONUS 6
-#define BTYPE 7
-#define BDURATION 8
+#define BFREQUENCY 4
+#define BGENEROSITY 8
+#define BITEMS_AT_ONCE 12
+#define BEXPIRING_IN 14
+#define BMAX_ITEMS_AT_ONCE 16
+#define BWHAT_CAN_BE_SPAWNED 20
+#define BBONUS 24
+#define BTYPE 28
+#define BDURATION 32
 #define NOT_BONUS_TAG -1
 
 int readWord(char* str, char* buffer, int start);
@@ -38,5 +40,7 @@ void getSpawnData(FILE* in, Level* l);
 void getWhatCanBeSpawned(FILE* in, SpawnData* sd);
 Level* loadLevelFromFile(Snake* s, const char* fileName);
 
+Bonus* newDefaultBonus();
+SpawnData newDefaultSpawnData();
 #endif /* FILEREADER_H */
 

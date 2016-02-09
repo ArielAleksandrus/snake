@@ -9,15 +9,17 @@ int main(){
   start_color();	// start color mode
   refresh();      // so the map will be properly shown
 
-	init_pair(BLACK, COLOR_BLACK, COLOR_BLACK);
-	init_pair(WHITE, COLOR_BLACK, COLOR_WHITE);
-	init_pair(RED, COLOR_BLACK, COLOR_RED);
-	init_pair(GREEN, COLOR_BLACK, COLOR_GREEN);
+	init_pair(BLACK, COLOR_BLACK, COLOR_BLACK);		// empty space
+	init_pair(WHITE, COLOR_BLACK, COLOR_WHITE);		// blocks
+	init_pair(RED, COLOR_BLACK, COLOR_RED);				// snake head.
+	init_pair(GREEN, COLOR_BLACK, COLOR_GREEN);		// snake body.
+	init_pair(YELLOW, COLOR_BLACK, COLOR_YELLOW);	// snake tail.
 	/////////////////////////////////////////////////////
 
   Player* p = newPlayer();
   GameControl* gc = newGameControl();
   Threads threads;
+	threads.bonusThreads.extraSizeThread = 0;
 	threads.args = newList();
 	////////////////// LOAD LEVEL 1 /////////////////////
 	Snake* s = malloc(sizeof(Snake));

@@ -33,6 +33,7 @@ void startLevel(Level* l, Snake* s, Player* p, GameControl* gc, Threads* threads
   hsd->snake = s;
   hsd->player = p;
   hsd->gameControl = gc;
+	hsd->bonusThreads = &threads->bonusThreads;
 
   SpawnFoodData* sfd = malloc(sizeof(SpawnFoodData));
   sfd->level = l;
@@ -95,6 +96,9 @@ void unloadLevel(Level* l, Snake* s, Threads* threads){
 	pthread_cancel(threads->spawnFoodThread);
 	pthread_cancel(threads->spawnBonusThread);
 	pthread_cancel(threads->directionInputThread);
+	BonusThreads bt = threads->bonusThreads;
+	if(bt.extraSizeThread != 0)
+		pthread_cancel(bt.extraSizeThread);
 	///////////////////////////////////////////////////////
 
 	//////////////// FREE ALLOCATED RESOURCES /////////////

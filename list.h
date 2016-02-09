@@ -14,7 +14,7 @@ typedef struct List{
 
 List* newList();
 Node* lnodeAt(List* l, int index);
-int lsearchIndexByRef(List*l, void* ptrAddr);
+int lsearchIndexByRef(List*l, void** ptrAddr);
 void* lAt(List* l, int index);
 void lclear(List* l);
 void lfree(List* l);

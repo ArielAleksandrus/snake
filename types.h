@@ -21,7 +21,6 @@
 #define EXTRA_LIFE 		60
 #define RESET_SIZE		70
 /////////////////////////////////////////////
-#define BONUS_DEFAULT_DURATION 10000 // 10000ms = 10 seconds
 
 #define LEFT 	1
 #define UP		2
@@ -29,16 +28,20 @@
 #define DOWN	4
 
 
-#define BLACK	1
-#define WHITE	2
-#define RED		3
-#define GREEN	4
+#define BLACK			1
+#define WHITE			2
+#define RED				3
+#define GREEN			4
+#define YELLOW		5
+
+#define BASE_SPEED 100
 
 #define REFRESH_RATE 100
 #define FOOD_THREAD_RATE 500
 #define BONUS_THREAD_RATE 1000
+#define SNAKE_MOVE_THREAD_RATE BASE_SPEED * (5.5 - snake->speed / 2)
+#define GAME_CONTROL_THREAD_RATE 200
 
-#define BASE_SPEED 100
 
 typedef struct Stats{
 	int food_eaten;
@@ -84,12 +87,14 @@ typedef struct Bonus{
 	int type; // see "Available Bonuses" constants.
 	int duration; // duration of effect in ms.
 	int rarity; // 0 is the most common. 6 is the most rare.
+	int timeout; // timeout to be removed from the map if not caught.
 }Bonus;
 
 typedef struct SpawnData{
 	int frequency; // frequency in number of seconds.
 	int generosity; // 0 for min generosity. 3 for max generosity.
 	int itemsAtOnce;
+	int expiring_in; // millisseconds until the bonus fades if not caught.
 	int maxItemsAtOnce;
 	List* whatCanBeSpawned;
 }SpawnData;
@@ -118,6 +123,10 @@ typedef struct GameControl{
 	int advanceLevel;
 }GameControl;
 
+typedef struct BonusThreads{
+	pthread_t extraSizeThread;
+}BonusThreads;
+
 typedef struct PrintMapData{
 	Level* level;
 	Player* player;
@@ -135,12 +144,12 @@ typedef struct HandleSnakeData{
 	Level* level;
 	Player* player;
 	GameControl* gameControl;
+	BonusThreads* bonusThreads;
 }HandleSnakeData;
 typedef struct DirectionInputData{
 	GameControl* gameControl;
 	Snake* snake;
 }DirectionInputData;
-
 typedef struct Threads{
 	pthread_t gameControlThread;
 	pthread_t directionInputThread;
@@ -148,6 +157,7 @@ typedef struct Threads{
 	pthread_t printMapThread;
 	pthread_t spawnFoodThread;
 	pthread_t spawnBonusThread;
+	BonusThreads bonusThreads;
 	List* args; // arguments provided for these threads (except gameControlThread
 							// and directionInputThread) so they can be freed.
 }Threads;
