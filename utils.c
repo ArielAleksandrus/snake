@@ -86,6 +86,7 @@ void printMap(int** map, int width, int height){
 		for(j = 0; j < width; j++){
 			char* c;
 			switch(map[j][i]){
+				case TUNL:
 				case BLANK:
 					color = BLACK;
 					c = " ";
@@ -218,8 +219,12 @@ void moveSnake(Snake* s, Level* l, Player* p, GameControl* gc, BonusThreads* bt)
 	if(collision == BLOCK){
 		*head = prevVal;
 		return;
+	} else if(collision == TUNL){
+		Crossing* c = lAt(s->crossings, s->crossings->size - 1);
+		*head = c->in == 1 ? c->tunnel->way2 : c->tunnel->way1;
 	}
 
+	// move snake
 	l->map[head->x][head->y] = SNAKE_HEAD;
 
 	l->map[prevVal.x][prevVal.y] = BLANK;
@@ -235,6 +240,22 @@ void moveSnake(Snake* s, Level* l, Player* p, GameControl* gc, BonusThreads* bt)
 	s->tail = *((Position*) lAt(s->bodyPositions, s->bodyPositions->size - 1));
 	if(s->bodyPositions->size > 1)
 		l->map[s->tail.x][s->tail.y] = SNAKE_TAIL;
+	// check if snake is in tunnels
+	for(i = 0; i < s->crossings->size; i++){
+		Crossing* c = lAt(s->crossings, i);
+		int remove = 0;
+		if(l->map[c->tunnel->way1.x][c->tunnel->way1.y] == BLANK){
+			l->map[c->tunnel->way1.x][c->tunnel->way1.y] = TUNL;
+			remove = 1;
+		}
+		if(l->map[c->tunnel->way2.x][c->tunnel->way2.y] == BLANK){
+			l->map[c->tunnel->way2.x][c->tunnel->way2.y] = TUNL;
+			remove = 1;
+		}
+		if(remove){
+			lremoveAt(s->crossings, i);
+		}
+	}
 }
 void handleBonus(Level* l, Snake* s, Player* p, int sleepTime, BonusThreads* bt){
 	if(s->activeBonuses->size == 0)
@@ -326,6 +347,9 @@ void gameControlThreadFunction(GameControlData* gcd){
 			if(gcd->player->lives <= 0){
 				// INCOMPLETE! - update stats.
 				// INCOMPLETE! - print score and stats.
+				clear();
+				move(0, 0);
+				refresh();
 				endwin();
 				system("clear");
 				printf("Você perdeu!\n\n");
@@ -415,6 +439,23 @@ int collide(Level* l, Snake* s, Player* p, GameControl* gc, BonusThreads* bt){
 			
 			playerDie(gc, p);
 			break;
+		}
+		case TUNL:{
+			Crossing* c = malloc(sizeof(Crossing));
+			int i;
+			Tunnel* t;
+			for(i = 0; i < l->tunnels->size; i++){
+				t = lAt(l->tunnels, i);
+				if(t->way1.x == head->x && t->way1.y == head->y){
+					c->tunnel = t;
+					c->in = 1;
+				} else if(t->way2.x == head->x && t->way2.y == head->y){
+					c->tunnel = t;
+					c->in = 2;
+				}
+			}
+			lappend(s->crossings, c);
+			return TUNL;
 		}
 	}
 	return BLANK;

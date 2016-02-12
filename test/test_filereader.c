@@ -52,6 +52,14 @@ void printLevelMap(Level* l){
 		printf("\tDuration: %d\n\t\t", b->duration);
 		printf("\tRarity: %d\n\t\t", b->rarity);
 	}
+	printf("\n\nTunnels: %d\n\t", l->tunnels->size);
+	Tunnel* t;
+	for(i = 0; i < l->tunnels->size; i++){
+		t = lAt(l->tunnels, i);
+		printf("Tunnel %d:\n\t", i);
+		printf("\tWay1: (%d, %d) Dir: %d\n\t", t->way1.x, t->way1.y, t->way1.direction);
+		printf("\tWay2: (%d, %d) Dir: %d\n\t", t->way2.x, t->way2.y, t->way2.direction);
+	}
 }
 void testLoadLevelFromFile(){
 	Snake* s = malloc(sizeof(Snake));

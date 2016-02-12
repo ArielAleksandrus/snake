@@ -11,6 +11,10 @@
 #define BONUS				5
 #define BLOCK				6
 #define BLANK				7
+#define TUNL				8
+
+#define TUNNEL_DEFAULT	0
+#define TUNNEL_CUSTOM		1
 
 //////////// AVAILABLE BONUSES //////////////
 #define EXTRA_POINTS 	10
@@ -19,7 +23,7 @@
 #define REDUCED_SPEED	40
 #define INVINCIBLE 		50
 #define EXTRA_LIFE 		60
-#define HALF_SIZE		70
+#define HALF_SIZE			70
 /////////////////////////////////////////////
 
 #define LEFT 	1
@@ -74,6 +78,7 @@ typedef struct Snake{
 	Position tail;
 	List* bodyPositions;
 	List* activeBonuses;
+	List* crossings;
 
 	int direction;
 	int newDirection;
@@ -99,6 +104,14 @@ typedef struct SpawnData{
 	List* whatCanBeSpawned;
 }SpawnData;
 
+typedef struct Tunnel{
+	Position way1;
+	Position way2;
+}Tunnel;
+typedef struct Crossing{
+	Tunnel* tunnel;
+	int in; // 1 for way1. 2 for way2;
+}Crossing;
 typedef struct Level{
 	int levelNumber;
 
@@ -115,6 +128,9 @@ typedef struct Level{
 	int curFoodQty;
 	List* bonuses;
 	SpawnData bonusSpawnRules;
+	
+	int tunnel_type;
+	List* tunnels;
 }Level;
 
 typedef struct GameControl{

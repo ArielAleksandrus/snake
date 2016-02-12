@@ -106,11 +106,12 @@ void unloadLevel(Level* l, Snake* s, Threads* threads){
 		free(l->map[i]);
 
 	lclear(l->bonusSpawnRules.whatCanBeSpawned);
-	lfree(l->bonusSpawnRules.whatCanBeSpawned);
+	lfree(l->tunnels);
 	lclear(l->bonuses);
 	free(l);
 	lclear(s->bodyPositions);
 	lclear(s->activeBonuses);
+	lclear(s->crossings);
 	free(s);
 	
 	lclear(threads->args);

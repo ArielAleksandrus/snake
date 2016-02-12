@@ -23,18 +23,20 @@ int readLine(FILE* in, char* buffer, size_t max){
 }
 
 int getTag(char* tag){
-	int i, total = 6;
-	
+	int i, total = 7;
+	char buff[32];
+	readWord(tag, buff, 0);
 	char* tags[total];
-	tags[MAP] = ":map:\n";
-	tags[TARGET_SCORE] = ":targetScore:\n";
-	tags[INITIAL_SPEED] = ":initialSpeed:\n";
-	tags[INITIAL_DIRECTION] = ":initialDirection:\n";
-	tags[SPAWN_POINT] = ":spawnPoint:\n";
-	tags[SPAWN_DATA] = ":spawnData:\n";
+	tags[MAP] = ":map:";
+	tags[TARGET_SCORE] = ":targetScore:";
+	tags[INITIAL_SPEED] = ":initialSpeed:";
+	tags[INITIAL_DIRECTION] = ":initialDirection:";
+	tags[SPAWN_POINT] = ":spawnPoint:";
+	tags[SPAWN_DATA] = ":spawnData:";
+	tags[TUNNEL_DATA] = ":tunnels:";
 	
 	for(i = 0; i < total; i++)
-		if(strcmp(tag, tags[i]) == 0)
+		if(strcmp(buff, tags[i]) == 0)
 			return i;
 	
 	return NOT_LEVEL_TAG;
@@ -76,11 +78,30 @@ int getBonusRelatedTag(char* tag){
 	}
 	return NOT_BONUS_TAG;
 }
+int getTunnelRelatedTag(char* tag){
+	char buff[32];
+	sscanf(tag, "%s", buff);
+	switch(buff[1]){
+		case 't':{
+			if(strcmp(buff, ":tunnel:") == 0)
+				return TUNNEL_TAG;
+		}
+		case 'w':{
+			if(strcmp(buff, ":way1:") == 0)
+				return TUNNEL_WAY1;
+			else if(strcmp(buff, ":way2:") == 0)
+				return TUNNEL_WAY2;
+		}
+	}
+	return NOT_TUNNEL_TAG;
+}
 int toConstant(char* constString){
 	if(strcmp(constString, "BLANK") == 0)
 		return BLANK;
 	else if(strcmp(constString, "BLOCK") == 0)
 		return BLOCK;
+	else if(strcmp(constString, "TUNL") == 0)
+		return TUNL;
 	else if(strcmp(constString, "RIGHT") == 0)
 		return RIGHT;
 	else if(strcmp(constString, "DOWN") == 0)
@@ -175,7 +196,6 @@ void getWhatCanBeSpawned(FILE* in, SpawnData* sd){
 	Bonus* b = NULL;
 	while(readLine(in, lineBuffer, lbs)){
 		tag = getBonusRelatedTag(lineBuffer);
-		clearBuffer(lineBuffer, lbs);
 		switch(tag){
 			case BBONUS:{
 				if(b != NULL)
@@ -193,7 +213,6 @@ void getWhatCanBeSpawned(FILE* in, SpawnData* sd){
 				clearBuffer(lineBuffer, lbs);
 				clearBuffer(wordBuffer, lbs);
 				readLine(in, lineBuffer, lbs);
-				readWord(lineBuffer, wordBuffer, 0);
 				sscanf(lineBuffer, "%s", wordBuffer);
 				b->type = toConstant(wordBuffer);
 				break;
@@ -211,7 +230,6 @@ void getWhatCanBeSpawned(FILE* in, SpawnData* sd){
 			}
 		}
 	}
-	
 }
 void getSpawnData(FILE* in, Level* l){
 	int lbs = 64;
@@ -266,12 +284,57 @@ void getSpawnData(FILE* in, Level* l){
 		}
 	}
 }
+void getTunnelData(FILE* in, Level* l){
+int lbs = 64, wbs = 32;
+	char lineBuffer[lbs], wordBuffer[wbs];
+	int tag;
+	clearBuffer(lineBuffer, lbs);
+	clearBuffer(wordBuffer, wbs);
+	
+	Tunnel* t = NULL;
+	while(readLine(in, lineBuffer, lbs)){
+		tag = getTunnelRelatedTag(lineBuffer);
+		switch(tag){
+			case TUNNEL_TAG:{
+				if(t != NULL)
+					lappend(l->tunnels, t);
+				t = malloc(sizeof(Tunnel));
+				break;
+			}
+			case TUNNEL_WAY1:{
+				clearBuffer(lineBuffer, lbs);
+				clearBuffer(wordBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d %d %s ", &t->way1.x, &t->way1.y, wordBuffer);
+				t->way1.direction = toConstant(wordBuffer);
+				break;
+			}
+			case TUNNEL_WAY2:{
+				clearBuffer(lineBuffer, lbs);
+				clearBuffer(wordBuffer, lbs);
+				readLine(in, lineBuffer, lbs);
+				sscanf(lineBuffer, "%d %d %s", &t->way2.x, &t->way2.y, wordBuffer);
+				t->way2.direction = toConstant(wordBuffer);
+				break;
+			}
+			case NOT_TUNNEL_TAG:{
+				lappend(l->tunnels, t);
+				fseek(in, strlen(lineBuffer) * -1, SEEK_CUR);
+				l->tunnel_type = TUNNEL_CUSTOM;
+				return;
+			}
+		}
+	}
+}
 Level* loadLevelFromFile(Snake* s, const char* fileName){
 	Level* l = malloc(sizeof(Level));
 	l->initialDirection = -1;
 	l->curFoodQty = 0;
 	l->bonuses = newList();
+	l->tunnels = newList();
+	l->tunnel_type = TUNNEL_DEFAULT;
 	s->bodyPositions = newList();
+	s->crossings = newList();
 	
 	char path[32];
 	strcpy(path, "maps/");
@@ -318,6 +381,10 @@ Level* loadLevelFromFile(Snake* s, const char* fileName){
 				}
 				case SPAWN_DATA:{
 					getSpawnData(pFile, l);
+					break;
+				}
+				case TUNNEL_DATA:{
+					getTunnelData(pFile, l);
 					break;
 				}
 			}

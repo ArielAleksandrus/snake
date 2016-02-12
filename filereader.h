@@ -13,6 +13,7 @@
 #define INITIAL_DIRECTION 3
 #define SPAWN_POINT 4
 #define SPAWN_DATA 5
+#define TUNNEL_DATA 6
 #define NOT_LEVEL_TAG -1
 
 #define BRARITY 0
@@ -27,6 +28,11 @@
 #define BDURATION 32
 #define NOT_BONUS_TAG -1
 
+#define TUNNEL_TAG 0
+#define TUNNEL_WAY1 1
+#define TUNNEL_WAY2 2
+#define NOT_TUNNEL_TAG -1
+
 int readWord(char* str, char* buffer, int start);
 int readLine(FILE* in, char* buffer, size_t max);
 void clearBuffer(char* buff, int size);
@@ -34,9 +40,11 @@ void clearBuffer(char* buff, int size);
 int toConstant(char* constString);
 int getTag(char* tag);
 int getBonusRelatedTag(char* tag);
+int getTunnelRelatedTag(char* tag);
 
 void getMap(FILE* in, Level* l);
 void getSpawnData(FILE* in, Level* l);
+void getTunnelData(FILE* in, Level* l);
 void getWhatCanBeSpawned(FILE* in, SpawnData* sd);
 Level* loadLevelFromFile(Snake* s, const char* fileName);
 
