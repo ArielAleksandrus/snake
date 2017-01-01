@@ -52,13 +52,6 @@
 	:whatCanBeSpawned:
 		:bonus:
 			:type:
-				HALF_SIZE
-			:duration:
-				1000
-			:rarity:
-				6
-		:bonus:
-			:type:
 				EXTRA_SIZE
 			:duration:
 				2000
@@ -66,9 +59,23 @@
 				1
 		:bonus:
 			:type:
+				EXTRA_POINTS
+			:duration:
+				1000
+			:rarity:
+				1
+		:bonus:
+			:type:
+				DOUBLE_POINTS
+			:duration:
+				1000
+			:rarity:
+				2
+		:bonus:
+			:type:
 				INVINCIBLE
 			:duration:
 				12000
 			:rarity:
-				6
+				3
 

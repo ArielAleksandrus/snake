@@ -14,7 +14,7 @@
 :targetScore:
 	10
 :initialSpeed:
-	2.5
+	4
 :initialDirection:
 	DOWN
 :spawnData:
