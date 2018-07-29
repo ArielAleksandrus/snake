@@ -35,7 +35,7 @@
 :targetScore:
 	500
 :initialSpeed:
-	6
+	8
 :initialDirection:
 	RIGHT
 :spawnData:
@@ -77,5 +77,5 @@
 			:duration:
 				12000
 			:rarity:
-				3
+				1
 
